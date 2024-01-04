@@ -1,14 +1,20 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'DatabaseHelper.dart';
 import 'User.dart';
 
-void main() {
-  runApp(SqliteDemoApp());
+void main() async {
+  await WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseHelper().initDB();
+  runApp(const SqliteDemoApp());
 }
 
 class SqliteDemoApp extends StatelessWidget {
+  const SqliteDemoApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,13 +22,13 @@ class SqliteDemoApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.purple,
       ),
-      home: MainApp(title: 'SQLite demo'),
+      home: const MainApp(title: 'SQLite demo'),
     );
   }
 }
 
 class MainApp extends StatefulWidget {
-  MainApp({Key? key, required this.title}) : super(key: key);
+  const MainApp({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
@@ -41,10 +47,7 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    this.dbHelper = DatabaseHelper();
-    this.dbHelper.initDB().whenComplete(() async {
-      setState(() {});
-    });
+    dbHelper = DatabaseHelper();
   }
 
   @override
@@ -52,15 +55,15 @@ class _MainAppState extends State<MainApp> {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         appBar: AppBar(
-          title: Text(widget.title!),
+          title: Text(widget.title),
         ),
         body: Column(
           children: <Widget>[
             Expanded(
-                child: new Column(
+                child: Column(
               children: [
                 Padding(
-                    padding: EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(8.0),
                     child: Form(
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,12 +92,12 @@ class _MainAppState extends State<MainApp> {
                           Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: [
-                                new Container(
-                                    margin:
-                                        new EdgeInsets.symmetric(vertical: 10),
-                                    child: new ElevatedButton(
-                                      child: const Text('Submit'),
+                                Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    child: ElevatedButton(
                                       onPressed: addOrEditUser,
+                                      child: const Text('Submit'),
                                     )),
                               ])
                         ]))),
@@ -114,7 +117,7 @@ class _MainAppState extends State<MainApp> {
     String age = ageController.text;
 
     if (!isEditing) {
-      User user = new User(name: name, age: int.parse(age), email: email);
+      User user = User(name: name, age: int.parse(age), email: email);
       await addUser(user);
     } else {
       _user.email = email;
@@ -127,11 +130,11 @@ class _MainAppState extends State<MainApp> {
   }
 
   Future<int> addUser(User user) async {
-    return await this.dbHelper.insertUser(user);
+    return await dbHelper.insertUser(user);
   }
 
   Future<int> updateUser(User user) async {
-    return await this.dbHelper.updateUser(user);
+    return await dbHelper.updateUser(user);
   }
 
   void resetData() {
@@ -143,7 +146,7 @@ class _MainAppState extends State<MainApp> {
 
   Widget userWidget() {
     return FutureBuilder(
-      future: this.dbHelper.retrieveUsers(),
+      future: dbHelper.retrieveUsers(),
       builder: (BuildContext context, AsyncSnapshot<List<User>> snapshot) {
         if (snapshot.hasData) {
           return ListView.builder(
@@ -154,16 +157,14 @@ class _MainAppState extends State<MainApp> {
                     background: Container(
                       color: Colors.red,
                       alignment: Alignment.centerRight,
-                      padding: EdgeInsets.symmetric(horizontal: 10.0),
-                      child: Icon(Icons.delete_forever),
+                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                      child: const Icon(Icons.delete_forever),
                     ),
                     key: UniqueKey(),
                     onDismissed: (DismissDirection direction) async {
-                      await this
-                          .dbHelper
-                          .deleteUser(snapshot.data![position].id!);
+                      await dbHelper.deleteUser(snapshot.data![position].id!);
                     },
-                    child: new GestureDetector(
+                    child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () => populateFields(snapshot.data![position]),
                       child: Column(
@@ -179,7 +180,7 @@ class _MainAppState extends State<MainApp> {
                                         12.0, 12.0, 12.0, 6.0),
                                     child: Text(
                                       snapshot.data![position].name,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 22.0,
                                           fontWeight: FontWeight.bold),
                                     ),
@@ -189,7 +190,7 @@ class _MainAppState extends State<MainApp> {
                                         12.0, 6.0, 12.0, 12.0),
                                     child: Text(
                                       snapshot.data![position].email.toString(),
-                                      style: TextStyle(fontSize: 18.0),
+                                      style: const TextStyle(fontSize: 18.0),
                                     ),
                                   ),
                                 ],
@@ -210,7 +211,7 @@ class _MainAppState extends State<MainApp> {
                                         child: Text(
                                           snapshot.data![position].age
                                               .toString(),
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 16,
                                             color: Colors.white,
                                           ),
@@ -222,7 +223,7 @@ class _MainAppState extends State<MainApp> {
                               ),
                             ],
                           ),
-                          Divider(
+                          const Divider(
                             height: 2.0,
                             color: Colors.grey,
                           )
@@ -231,7 +232,7 @@ class _MainAppState extends State<MainApp> {
                     ));
               });
         } else {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
       },
     );
